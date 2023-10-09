@@ -1,63 +1,56 @@
-const form = document.querySelector("form");
-const input = document.querySelector("form input");
-const add = document.querySelector(".add");
-const list = document.querySelector("ul");
+/* VARIABLES */
 
-const todoArray = [];
+const mainInput = document.querySelector("input");
+const addBtn = document.querySelector(".add");
+const todosContainer = document.querySelector("ul");
 
-// getting the local storage back after a refresh
-function refresh() {
-  let keys = Object.keys(localStorage);
-  for (i = 0; i < keys.length; i++) {
-    let inputValue = localStorage.getItem(keys[i]);
-    todoArray.push(inputValue);
-  }
-  // now let's display our previous values
-  if (todoArray.length > 0) {
-    for (i = 0; i < todoArray.length; i++) {
-      let inputValue = todoArray[i];
-      const items = document.createElement("li");
-      const btnDelete = document.createElement("button");
-      btnDelete.classList.add("remove");
-      btnDelete.innerText = "delete";
-      items.innerText = inputValue;
-      items.appendChild(btnDelete);
-      list.appendChild(items);
-    }
-  }
+/* FUNCTIONS */
+
+const refreshTodo = () => {
+  todosContainer.innerHTML = "";
+  const todosArrFromDb = JSON.parse(localStorage.getItem("todos"));
+  todosArrFromDb.forEach((todo) => {
+    const newLi = document.createElement("li");
+    newLi.innerHTML = `<span>${todo.content}</span> <button class="delete">delete</delete>`;
+    todosContainer.appendChild(newLi);
+
+    newLi
+      .querySelector(".delete")
+      .addEventListener("click", () => deleteToto(todo));
+  });
+};
+
+const saveToDatabase = (todo) => {
+  const arrFromDb = JSON.parse(localStorage.getItem("todos"));
+  arrFromDb.push({
+    id: new Date().getTime(),
+    content: todo,
+  });
+  localStorage.setItem("todos", JSON.stringify(arrFromDb));
+};
+
+const deleteToto = (todo) => {
+  const arrFromDb = JSON.parse(localStorage.getItem("todos"));
+  const newArr = arrFromDb.filter((item) => item.id !== todo.id);
+  localStorage.setItem("todos", JSON.stringify(newArr));
+  refreshTodo();
+};
+
+/* ACTIONS */
+
+if (!localStorage.getItem("todos")) {
+  localStorage.setItem("todos", JSON.stringify([]));
+} else {
+  refreshTodo();
 }
 
-window.onload = refresh();
-
-add.addEventListener("click", (e) => {
-  // no refresh
+addBtn.addEventListener("click", (e) => {
   e.preventDefault();
 
-  // retrieve input value
-  let inputValue = input.value;
-  if (inputValue !== "") {
-    let id = new Date().getTime();
-    localStorage.setItem(id, inputValue);
-    const items = document.createElement("li");
-    const btnDelete = document.createElement("button");
-    btnDelete.classList.add("remove");
-    btnDelete.innerText = "delete";
-    items.innerText = inputValue;
-    items.appendChild(btnDelete);
-    list.appendChild(items);
-    input.value = "";
-
-    // delete the todo
-    btnDelete.addEventListener("click", (e) => {
-      let stored = Object.keys(localStorage);
-      items.removeChild(btnDelete);
-      const content = items.innerText;
-      for (i = 0; i < stored.length; i++) {
-        if (localStorage[stored[i]] == content) {
-          delete localStorage[stored[i]];
-          list.removeChild(items);
-        }
-      }
-    });
+  if (mainInput.value.trim().length) {
+    const todo = mainInput.value;
+    mainInput.value = "";
+    saveToDatabase(todo);
+    refreshTodo();
   }
 });
